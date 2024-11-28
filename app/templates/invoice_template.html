@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        .invoice-container {
+            width: 80%;
+            margin: 20px auto;
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            font-size: 24px;
+            margin: 0;
+            color: #333;
+        }
+        .company-info {
+            font-size: 14px;
+            color: #666;
+        }
+        .details {
+            margin-bottom: 20px;
+        }
+        .details p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        .total {
+            text-align: right;
+            font-weight: bold;
+        }
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 50px;
+        }
+        .back-link {
+            text-align: center;
+            margin-top: 50px;
+        }
+        /* Hide elements during printing */
+        @media print {
+            .back-link {
+                display: none; /* Hides the Back to Manage Products link when printing */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice-container">
+        <div class="header">
+            <div class="company-info">
+                <p>19 Souq Al Tawfikiya, Egypt, Cairo</p>
+                <p>Phone: +201009220056</p>
+            </div>
+            <div>
+                <p><strong>Invoice Number:</strong> {{ invoice.invoice_number }}</p>
+                <p><strong>Date:</strong> {{ invoice.invoice_date.strftime('%Y-%m-%d') }}</p>
+            </div>
+        </div>
+
+        <div class="details">
+            <p><strong>Customer Name:</strong> {{ invoice.customer_name }}</p>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Rate (EGP)</th>
+                    <th>Discount (EGP)</th>
+                    <th>Amount (EGP)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% set seen_products = [] %}
+                {% for item in invoice.items %}
+                    {% if item.product_id not in seen_products %}
+                        <tr>
+                            <td>{{ item.product.name if item.product else 'No Product Found' }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>{{ item.rate | round(2) }}</td>
+                            <td>{{ item.discount | round(2) }}</td> <!-- Display the discount per item -->
+                            <td>{{ item.amount | round(2) }}</td>
+                        </tr>
+                        {% set seen_products = seen_products + [item.product_id] %}
+                    {% endif %}
+                {% else %}
+                    <tr>
+                        <td colspan="5" style="text-align: center;">No items in this invoice.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                {% if invoice.discount and invoice.discount > 0 %}
+                    <tr>
+                        <td colspan="4" class="total">Discount (EGP)</td>
+                        <td>{{ invoice.discount | round(2) }}</td>
+                    </tr>
+                {% endif %}
+                <tr>
+                    <td colspan="4" class="total">Total Amount</td>
+                    <td>{{ invoice.total_amount | round(2) }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <!-- Back to Manage Products link -->
+    <div class="back-link">
+        <a href="/" class="btn btn-secondary">Back to Manage Products</a>
+    </div>
+</body>
+</html>

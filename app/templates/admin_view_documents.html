@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - View All Documents</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .navigation {
+            margin-bottom: 20px;
+        }
+        .navigation a {
+            margin: 0 15px;
+            text-decoration: none;
+            color: #4CAF50;
+        }
+        .navigation a:hover {
+            text-decoration: underline;
+        }
+        .container {
+            display: flex;
+        }
+        .left-panel {
+            flex: 1;
+            border-right: 1px solid #ddd;
+            padding: 10px;
+        }
+        .right-panel {
+            flex: 3;
+            padding: 10px;
+        }
+        a {
+            text-decoration: none;
+            color: green;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        iframe {
+            width: 100%;
+            height: 500px;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Links -->
+    <div class="navigation">
+        <a href="/">Back to Manage Products</a>
+        <a href="/upload">Upload Documents</a>
+    </div>
+
+    <h1>Admin - View Uploaded Documents</h1>
+    <div class="container">
+        <div class="left-panel">
+            <h3>Documents</h3>
+            <ul>
+                {% for filename, url in zipped_files %}
+                <li><a href="{{ url }}" target="viewer">{{ filename }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="right-panel">
+            <iframe name="viewer" src=""></iframe>
+        </div>
+    </div>
+</body>
+</html>

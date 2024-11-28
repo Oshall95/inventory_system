@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Management System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+        }
+        .navigation {
+            margin-bottom: 20px;
+        }
+        .navigation a {
+            margin: 0 15px;
+            text-decoration: none;
+            color: #4CAF50;
+        }
+        .navigation a:hover {
+            text-decoration: underline;
+        }
+        table {
+            width: 90%;
+            margin: 20px auto;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        tr.low-stock {
+            background-color: #ffcccc;
+        }
+        form {
+            margin: 20px auto;
+            width: 90%;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+        form input, form select, form button {
+            padding: 10px;
+            font-size: 16px;
+        }
+        form button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        #searchBar {
+            margin: 20px;
+            padding: 10px;
+            width: 90%;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="navigation">
+        <a href="/">Manage Products</a> | <a href="/invoice">Create Invoice</a> | <a href="/invoices">View Invoices</a> | <a href="/upload">Upload Documents</a> |  <a href="/admin_view_documents">View All Documents</a>
+    </div>
+
+    <h1>Inventory Management System</h1>
+
+    <!-- Add Product Form -->
+    <form id="addProductForm">
+        <input type="text" id="name" placeholder="Product Name" required>
+        <input type="text" id="description" placeholder="Description" required>
+	<input type="number" id="price" placeholder="Price" step="0.01" required>
+        <input type="number" id="quantity" placeholder="Quantity" required>
+        <input type="number" id="low_stock_threshold" placeholder="Low Stock Threshold" required>
+        <select id="categoryDropdown" required>
+            <option value="">Select Category</option>
+        </select>
+        <button type="button" onclick="addCategory()">Add New Category</button>
+        <button type="submit">Add Product</button>
+    </form>
+
+    <!-- Search Bar -->
+    <input type="text" id="searchBar" placeholder="Search by name..." onkeyup="searchProducts()">
+
+    <!-- Product Table -->
+    <table id="productTable">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Category</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        async function loadProducts() {
+	    console.log('fetching Products..');
+            const response = await fetch('/api/products', { credentials: 'include' });
+            const data = await response.json();
+            console.log('Products data:', data.products);
+            const tableBody = document.querySelector('#productTable tbody');
+            tableBody.innerHTML = '';
+
+            if (data.products.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="6">No products available.</td></tr>';
+                return;
+            }
+
+            data.products.forEach(product => {
+                console.log('Rendering product:', product);
+                const row = document.createElement('tr');
+                row.className = product.low_stock ? 'low-stock' : '';
+
+                row.innerHTML = `
+                    <td>${product.name}</td>
+                    <td>${product.description}</td>
+                    <td>${parseFloat(product.price).toFixed(2)}</td>
+                    <td>${product.quantity}</td>
+                    <td>${product.category || 'N/A'}</td>
+                    <td>
+                        <button onclick="editProduct(${product.id}, '${product.name}', '${product.description}', ${product.price}, ${product.quantity}, ${product.low_stock_threshold})">Edit</button>
+                        <button onclick="deleteProduct(${product.id})">Delete</button>
+                    </td>
+
+                `;
+                tableBody.appendChild(row);
+            });
+            console.log('Table content:', document.querySelector('#productTable tbody').innerHTML); // Debugging log
+        }
+
+        async function loadCategories() {
+            const response = await fetch('/api/categories', { credentials: 'include' });
+            const data = await response.json();
+            const dropdown = document.getElementById('categoryDropdown');
+            dropdown.innerHTML = '<option value="">Select Category</option>';
+
+            data.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category.id;
+                option.textContent = category.name;
+                dropdown.appendChild(option);
+            });
+        }
+
+        async function addCategory() {
+            const name = prompt('Enter category name:');
+            if (!name) return;
+
+            const response = await fetch('/api/add_category', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name }),
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                alert('Category added successfully.');
+                loadCategories();
+            } else {
+                alert('Error adding category.');
+            }
+        }
+
+        document.getElementById('addProductForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const newProduct = {
+                name: document.getElementById('name').value,
+                description: document.getElementById('description').value,
+                price: parseFloat(document.getElementById('price').value),
+                quantity: parseInt(document.getElementById('quantity').value),
+                low_stock_threshold: parseInt(document.getElementById('low_stock_threshold').value),
+                category_id: parseInt(document.getElementById('categoryDropdown').value)
+            };
+
+            const response = await fetch('/api/add_product', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newProduct),
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                alert('Product added successfully.');
+                document.getElementById('addProductForm').reset();
+                loadProducts();
+            } else {
+                alert('Error adding product.');
+            }
+        });
+
+        async function deleteProduct(productId) {
+            if (!confirm('Are you sure you want to delete this product?')) return;
+
+            const response = await fetch(`/api/delete_product/${productId}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                alert('Product deleted successfully.');
+                loadProducts();
+            } else {
+                alert('Error deleting product.');
+            }
+        }
+
+        async function editProduct(id, name, description, price, quantity, lowStockThreshold) {
+            const newName = prompt('Enter new name:', name);
+            const newDescription = prompt('Enter new description:', description);
+            const newPrice = parseFloat(prompt('Enter new price (e.g., 6.75):', price));
+            const newQuantity = parseInt(prompt('Enter new quantity:', quantity));
+            const newLowStockThreshold = parseInt(prompt('Enter new low stock threshold:', lowStockThreshold));
+
+            const response = await fetch(`/api/edit_product/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: newName,
+                    description: newDescription,
+                    price: newPrice,
+                    quantity: newQuantity,
+                    low_stock_threshold: newLowStockThreshold
+                }),
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                alert('Product updated successfully.');
+                loadProducts();
+            } else {
+                alert('Error updating product.');
+            }
+        }
+
+        function searchProducts() {
+            const query = document.getElementById('searchBar').value.toLowerCase();
+            const rows = document.querySelectorAll('#productTable tbody tr');
+
+            rows.forEach(row => {
+                const name = row.cells[0].textContent.toLowerCase();
+                row.style.display = name.includes(query) ? '' : 'none';
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProducts();
+            loadCategories();
+        });
+    </script>
+</body>
+</html>

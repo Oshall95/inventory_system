@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Uploaded Documents</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+        .file-list {
+            width: 30%;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+        .file-list ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .file-list ul li {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .file-list ul li a {
+            text-decoration: none;
+            color: #4CAF50;
+        }
+        .file-list ul li a:hover {
+            text-decoration: underline;
+        }
+        .file-list ul li button {
+            margin-left: 10px;
+            padding: 5px 10px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .file-list ul li button.edit {
+            background-color: #007bff;
+        }
+        .file-list ul li button:hover {
+            opacity: 0.8;
+        }
+        .viewer {
+            width: 70%;
+        }
+        iframe {
+            width: 100%;
+            height: 500px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="navigation">
+        <a href="/">Back to Manage Products</a>
+    </div>
+    <h1>View Uploaded Documents</h1>
+    <div class="container">
+        <!-- Sidebar: List of files -->
+        <div class="file-list">
+            <h3>Documents</h3>
+            <ul>
+                {% for filename, file_url in zipped_files %}
+                <li>
+                    <a href="{{ file_url }}" target="viewer-frame">{{ filename }}</a>
+                    <div>
+                        <button class="edit" onclick="editFile('{{ filename }}')">Edit</button>
+                        <button onclick="deleteFile('{{ filename }}')">Delete</button>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Main: Document Viewer -->
+        <div class="viewer">
+            <iframe name="viewer-frame" src=""></iframe>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript function to handle deleting a file
+        async function deleteFile(filename) {
+            if (confirm(`Are you sure you want to delete "${filename}"?`)) {
+                const response = await fetch(`/delete_file/${encodeURIComponent(filename)}`, { method: 'DELETE' });
+                if (response.ok) {
+                    alert(`${filename} has been deleted.`);
+                    location.reload(); // Reload the page to update the list
+                } else {
+                    alert(`Failed to delete ${filename}.`);
+                }
+            }
+        }
+
+        // JavaScript function to handle editing a file
+        function editFile(filename) {
+            const newFilename = prompt(`Rename "${filename}" to:`);
+            if (newFilename) {
+                fetch(`/edit_file/${encodeURIComponent(filename)}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ new_filename: newFilename })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert(`${filename} has been renamed to ${newFilename}.`);
+                        location.reload(); // Reload the page to update the list
+                    } else {
+                        alert(`Failed to rename ${filename}.`);
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>

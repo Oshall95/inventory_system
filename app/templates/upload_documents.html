@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Documents</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        h1 {
+            text-align: center;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        form input[type="file"] {
+            margin-bottom: 20px;
+        }
+        form button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        form button:hover {
+            background-color: #45a049;
+        }
+        .success {
+            color: green;
+            font-size: 16px;
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="navigation">
+    <a href="/">Back to Manage Products</a>
+</div>
+	
+    <div class="container">
+        <h1>Upload Documents</h1>
+        <form action="/upload_documents" method="POST" enctype="multipart/form-data">
+            <input type="file" name="document" accept=".doc,.docx,.pdf" required>
+            <button type="submit">Upload Document</button>
+        </form>
+        
+        {% if uploaded_file_url %}
+        <div class="success">
+            <p>File uploaded successfully!</p>
+            <a href="{{ uploaded_file_url }}" target="_blank">View Uploaded Document</a>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
